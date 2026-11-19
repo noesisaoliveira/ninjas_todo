@@ -9,6 +9,7 @@ Ninjas ToDo reminds you about your open Home Assistant shopping-list items when 
 - Finds matching locations from OpenStreetMap and checks a 120 m radius around each location.
 - Reads open items from the built-in `todo.shopping_list` entity.
 - Refreshes the location dataset daily and provides buttons to refresh or clear its local cache.
+- Provides a **Query 1Km Now** sensor with the nearby supermarket count and matching locations as attributes.
 - Creates no Home Assistant zones. Locations are stored by this integration, so zone limits and zone cleanup are not an issue.
 
 ## Installation
@@ -36,6 +37,8 @@ The Ninjas ToDo device provides two buttons:
 
 - **Refresh supermarket locations** fetches a current dataset from OpenStreetMap.
 - **Clear location cache** removes the downloaded dataset. Reminders resume after the next refresh (or after pressing the refresh button).
+
+The **Query 1Km Now** sensor reports how many selected supermarkets are within 1 km of the configured tracker. Its `locations` attribute lists each match with its name, brand, distance, and coordinates. It updates when the tracker moves and when the cached supermarket dataset changes. In **Developer Tools > States**, inspect `sensor.ninjas_todo_query_1km_now` to see the result.
 
 The integration enforces a 30-minute notification cooldown and sends a reminder only when the tracked entity newly enters the 120 m radius. It does not create, rename, or delete Home Assistant zones.
 

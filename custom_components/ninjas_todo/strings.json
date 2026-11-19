@@ -42,6 +42,11 @@
       "refresh_locations": {
         "name": "Refresh supermarket locations"
       }
+    },
+    "sensor": {
+      "query_1km_now": {
+        "name": "Query 1Km Now"
+      }
     }
   }
 }

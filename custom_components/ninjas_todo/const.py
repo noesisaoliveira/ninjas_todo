@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import timedelta
 
 DOMAIN = "ninjas_todo"
-PLATFORMS = ["button"]
+PLATFORMS = ["button", "sensor"]
 TODO_ENTITY = "todo.shopping_list"
 OVERPASS_URL = "https://overpass-api.de/api/interpreter"
 LOCATION_REFRESH_INTERVAL = timedelta(hours=24)

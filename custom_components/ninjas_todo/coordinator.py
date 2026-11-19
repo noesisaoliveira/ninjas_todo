@@ -143,7 +143,7 @@ class SupermarketCoordinator(DataUpdateCoordinator[list[dict[str, Any]]]):
             current = {
                 location["id"]
                 for location in self.locations
-                if _distance_meters(
+                if distance_meters(
                     float(latitude),
                     float(longitude),
                     location["latitude"],
@@ -202,7 +202,7 @@ class SupermarketCoordinator(DataUpdateCoordinator[list[dict[str, Any]]]):
         self.async_set_updated_data([])
 
 
-def _distance_meters(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
+def distance_meters(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
     from math import asin, cos, radians, sin, sqrt
 
     lat1_rad, lat2_rad = radians(lat1), radians(lat2)
