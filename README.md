@@ -14,6 +14,17 @@ Ninjas ToDo reminds you about your open Home Assistant shopping-list items when 
 
 ## Installation
 
+### Required: built-in Shopping list integration
+
+Ninjas ToDo reads open items from Home Assistant's built-in Shopping list integration. Set it up before configuring Ninjas ToDo:
+
+1. In Home Assistant, go to **Settings > Devices & services**.
+2. Select **Add integration**.
+3. Search for and select **Shopping list**.
+4. Follow the setup flow. Confirm that `todo.shopping_list` exists in **Developer Tools > States**.
+
+See the [Home Assistant Shopping list documentation](https://www.home-assistant.io/integrations/shopping_list/) for details.
+
 ### HACS
 
 Add `https://github.com/noesisaoliveira/ninjas_todo` as a custom integration repository in HACS, then install **Ninjas ToDo** and restart Home Assistant.
@@ -38,9 +49,9 @@ The Ninjas ToDo device provides two buttons:
 - **Refresh supermarket locations** fetches a current dataset from OpenStreetMap.
 - **Clear location cache** removes the downloaded dataset. Reminders resume after the next refresh (or after pressing the refresh button).
 
-The **Query 1Km Now** sensor reports how many selected supermarkets are within 1 km of the configured tracker. Its `locations` attribute lists each match with its name, brand, distance, and coordinates. It updates when the tracker moves and when the cached supermarket dataset changes. In **Developer Tools > States**, inspect `sensor.ninjas_todo_query_1km_now` to see the result.
+The **Query 1Km Now** sensor reports how many selected supermarkets are within 1 km of the configured tracker. Its `locations` attribute lists each match with its name, brand, distance, and coordinates. It updates when the tracker moves and when the cached supermarket dataset changes. In **Developer Tools → States**, inspect `sensor.ninjas_todo_query_1km_now` to see the result.
 
-The integration enforces a 30-minute notification cooldown and sends a reminder only when the tracked entity newly enters the 120 m radius. It does not create, rename, or delete Home Assistant zones.
+The integration sends a reminder only when the tracked entity newly enters the 120 m radius, then waits 30 minutes before notifying again. This cooldown helps prevent repeated notifications when GPS jitter moves the tracker across the radius edge. On iPhone, notifications are marked **time-sensitive**; allow Time Sensitive Notifications for Home Assistant in iOS notification settings if you want them to get through Focus modes. The integration does not create, rename, or delete Home Assistant zones.
 
 ## Location data and privacy
 

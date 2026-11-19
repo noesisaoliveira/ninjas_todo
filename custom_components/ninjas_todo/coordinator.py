@@ -189,7 +189,11 @@ class SupermarketCoordinator(DataUpdateCoordinator[list[dict[str, Any]]]):
             {
                 "title": "You're at the supermarket",
                 "message": f"{len(summaries)} item(s): {', '.join(summaries)}",
-                "data": {"tag": "shopping-list", "group": "shopping"},
+                "data": {
+                    "tag": "shopping-list",
+                    "group": "shopping",
+                    "push": {"interruption-level": "time-sensitive"},
+                },
             },
             blocking=True,
         )
