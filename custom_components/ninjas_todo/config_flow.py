@@ -68,13 +68,10 @@ class NinjasToDoConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     @staticmethod
     @callback
     def async_get_options_flow(config_entry: config_entries.ConfigEntry):
-        return NinjasToDoOptionsFlow(config_entry)
+        return NinjasToDoOptionsFlow()
 
 
 class NinjasToDoOptionsFlow(config_entries.OptionsFlow):
-    def __init__(self, config_entry: config_entries.ConfigEntry) -> None:
-        self.config_entry = config_entry
-
     async def async_step_init(self, user_input: dict[str, Any] | None = None):
         if user_input is not None:
             if user_input["brands"]:

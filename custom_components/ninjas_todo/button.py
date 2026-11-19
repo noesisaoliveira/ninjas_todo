@@ -22,7 +22,13 @@ async def async_setup_entry(
     )
 
 
-class ClearLocationCacheButton(CoordinatorEntity, ButtonEntity):
+class _ControlButton(CoordinatorEntity, ButtonEntity):
+    @property
+    def available(self) -> bool:
+        return True
+
+
+class ClearLocationCacheButton(_ControlButton):
     _attr_has_entity_name = True
     _attr_entity_category = EntityCategory.CONFIG
     _attr_name = "Clear location cache"
@@ -41,7 +47,7 @@ class ClearLocationCacheButton(CoordinatorEntity, ButtonEntity):
         await self.coordinator.async_clear_locations()
 
 
-class RefreshLocationsButton(CoordinatorEntity, ButtonEntity):
+class RefreshLocationsButton(_ControlButton):
     _attr_has_entity_name = True
     _attr_entity_category = EntityCategory.CONFIG
     _attr_name = "Refresh supermarket locations"

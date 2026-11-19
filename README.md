@@ -51,4 +51,4 @@ Brand matching uses the OpenStreetMap `brand`, `name`, and `operator` tags. Cove
 
 ## Development
 
-The custom integration is in `custom_components/ninjas_todo`. The icon asset is `custom_components/ninjas_todo/icon.svg`. HACS does not publish an integration to the default store automatically; the repository must be added as a custom repository, and releases must be published by a maintainer.
+The custom integration is in `custom_components/ninjas_todo`. Home Assistant serves its local brand images from `custom_components/ninjas_todo/brand/`; `icon.svg` is the scalable source artwork. HACS does not publish an integration to the default store automatically; the repository must be added as a custom repository, and releases must be published by a maintainer.
