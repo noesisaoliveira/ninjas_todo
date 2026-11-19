@@ -89,6 +89,10 @@ class SupermarketCoordinator(DataUpdateCoordinator[list[dict[str, Any]]]):
             async with session.post(
                 OVERPASS_URL,
                 data={"data": query},
+                headers={
+                    "Accept": "application/json",
+                    "User-Agent": "NinjasToDo-HomeAssistant (+https://github.com/noesisaoliveira/ninjas_todo)",
+                },
                 timeout=aiohttp.ClientTimeout(total=90),
             ) as response:
                 response.raise_for_status()
