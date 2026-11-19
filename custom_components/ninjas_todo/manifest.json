@@ -1,0 +1,9 @@
+{
+  "domain": "ninjas_todo",
+  "name": "Ninjas ToDo",
+  "codeowners": ["@noesisaoliveira"],
+  "config_flow": true,
+  "documentation": "https://github.com/noesisaoliveira/ninjas_todo",
+  "iot_class": "cloud_polling",
+  "version": "0.1.0"
+}

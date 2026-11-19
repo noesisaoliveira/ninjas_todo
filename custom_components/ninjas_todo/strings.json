@@ -1,0 +1,47 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Ninjas ToDo",
+        "description": "Choose the person or device tracker, the phone notification service, and the supermarket brands to monitor in Portugal.",
+        "data": {
+          "tracker_entity": "Location source",
+          "notify_service": "Phone notification service",
+          "brands": "Supermarket brands"
+        }
+      }
+    },
+    "error": {
+      "no_notify_services": "No notify services are available. Add and configure the Home Assistant Companion App first.",
+      "no_brands": "Select at least one supermarket brand."
+    },
+    "abort": {
+      "already_configured": "This location source is already configured."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Ninjas ToDo settings",
+        "data": {
+          "tracker_entity": "Location source",
+          "notify_service": "Phone notification service",
+          "brands": "Supermarket brands"
+        }
+      }
+    },
+    "error": {
+      "no_brands": "Select at least one supermarket brand."
+    }
+  },
+  "entity": {
+    "button": {
+      "clear_location_cache": {
+        "name": "Clear location cache"
+      },
+      "refresh_locations": {
+        "name": "Refresh supermarket locations"
+      }
+    }
+  }
+}
