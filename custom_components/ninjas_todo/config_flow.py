@@ -7,7 +7,7 @@ from homeassistant import config_entries
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import selector
 
-from .const import BRAND_LABELS, DOMAIN
+from .const import BRAND_LABELS, DEFAULT_DETECTION_RADIUS_METERS, DOMAIN
 
 
 def _notify_services(hass: HomeAssistant) -> list[dict[str, str]]:
@@ -15,21 +15,25 @@ def _notify_services(hass: HomeAssistant) -> list[dict[str, str]]:
     return [
         {"value": f"notify.{name}", "label": f"{name}"}
         for name in sorted(services)
-        if name != "send_message"
+        if name.startswith("mobile_app_")
     ]
 
 
 def _schema(hass: HomeAssistant, defaults: dict[str, Any] | None = None) -> vol.Schema:
     defaults = defaults or {}
+    notify_services = _notify_services(hass)
+    notify_service = defaults.get("notify_service")
+    if notify_service not in {service["value"] for service in notify_services}:
+        notify_service = notify_services[0]["value"] if notify_services else None
     tracker_options = ["person", "device_tracker"]
     return vol.Schema(
         {
             vol.Required("tracker_entity", default=defaults.get("tracker_entity")): selector.EntitySelector(
                 selector.EntitySelectorConfig(domain=tracker_options)
             ),
-            vol.Required("notify_service", default=defaults.get("notify_service")): selector.SelectSelector(
+            vol.Required("notify_service", default=notify_service): selector.SelectSelector(
                 selector.SelectSelectorConfig(
-                    options=_notify_services(hass), mode=selector.SelectSelectorMode.DROPDOWN
+                    options=notify_services, mode=selector.SelectSelectorMode.DROPDOWN
                 )
             ),
             vol.Required("brands", default=defaults.get("brands", list(BRAND_LABELS))): selector.SelectSelector(
@@ -40,6 +44,19 @@ def _schema(hass: HomeAssistant, defaults: dict[str, Any] | None = None) -> vol.
                     ],
                     multiple=True,
                     mode=selector.SelectSelectorMode.LIST,
+                )
+            ),
+            vol.Required(
+                "detection_radius_m",
+                default=defaults.get(
+                    "detection_radius_m", DEFAULT_DETECTION_RADIUS_METERS
+                ),
+            ): selector.NumberSelector(
+                selector.NumberSelectorConfig(
+                    min=10,
+                    max=2000,
+                    step=10,
+                    mode=selector.NumberSelectorMode.BOX,
                 )
             ),
         }

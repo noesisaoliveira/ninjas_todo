@@ -6,7 +6,7 @@ Ninjas ToDo reminds you about your open Home Assistant shopping-list items when 
 
 - Select a person or device tracker and a Companion App notification service during setup.
 - Select one or more brands: Continente (including Modelo and Bom Dia), Pingo Doce, Auchan, Lidl, Makro, Intermarche, Aldi, Mercadona, and El Corte Inglés.
-- Finds matching locations from OpenStreetMap and checks a 120 m radius around each location.
+- Finds matching locations from OpenStreetMap and checks a configurable radius around each location (120 m by default).
 - Reads open items from the built-in `todo.shopping_list` entity.
 - Refreshes the location dataset daily and provides buttons to refresh or clear its local cache.
 - Provides a **Query 1Km Now** sensor with the nearby supermarket count and matching locations as attributes.
@@ -37,21 +37,22 @@ Copy `custom_components/ninjas_todo` into the `custom_components` directory of y
 
 1. In **Settings > Devices & services**, select **Add integration** and search for **Ninjas ToDo**.
 2. Choose the person or device tracker whose location is supplied by the Home Assistant Companion App.
-3. Choose that phone's `notify.mobile_app_*` service and the supermarket brands to monitor.
+3. Choose that phone's `notify.mobile_app_*` service, supermarket brands, and detection radius in meters (120 m by default).
 4. Confirm that your shopping list is available as `todo.shopping_list`.
 
 The integration uses the selected entity's latitude and longitude attributes. Home Assistant location permissions and mobile background-location settings must allow location updates.
 
 ## Controls
 
-The Ninjas ToDo device provides two buttons:
+The Ninjas ToDo device provides three buttons:
 
 - **Refresh supermarket locations** fetches a current dataset from OpenStreetMap.
 - **Clear location cache** removes the downloaded dataset. Reminders resume after the next refresh (or after pressing the refresh button).
+- **Test phone notification** sends a sample notification through the selected Companion App service without requiring a supermarket entry or shopping-list items.
 
 The **Query 1Km Now** sensor reports how many selected supermarkets are within 1 km of the configured tracker. Its `locations` attribute lists each match with its name, brand, distance, and coordinates. It updates when the tracker moves and when the cached supermarket dataset changes. In **Developer Tools → States**, inspect `sensor.ninjas_todo_query_1km_now` to see the result.
 
-The integration sends a reminder only when the tracked entity newly enters the 120 m radius, then waits 30 minutes before notifying again. This cooldown helps prevent repeated notifications when GPS jitter moves the tracker across the radius edge. On iPhone, notifications are marked **time-sensitive**; allow Time Sensitive Notifications for Home Assistant in iOS notification settings if you want them to get through Focus modes. The integration does not create, rename, or delete Home Assistant zones.
+The integration sends a reminder only when the tracked entity newly enters the configured radius, then waits 30 minutes before notifying again. This cooldown helps prevent repeated notifications when GPS jitter moves the tracker across the radius edge. On iPhone, notifications are marked **time-sensitive**; allow Time Sensitive Notifications for Home Assistant in iOS notification settings if you want them to get through Focus modes. The integration does not create, rename, or delete Home Assistant zones.
 
 ## Location data and privacy
 

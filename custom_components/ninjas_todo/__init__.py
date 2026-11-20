@@ -6,7 +6,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import Event, HomeAssistant
 from homeassistant.helpers.event import async_track_state_change_event
 
-from .const import DOMAIN, PLATFORMS
+from .const import DEFAULT_DETECTION_RADIUS_METERS, DOMAIN, PLATFORMS
 from .coordinator import SupermarketCoordinator
 
 _LOGGER = logging.getLogger(__name__)
@@ -23,6 +23,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         tracker_entity=_entry_value(entry, "tracker_entity"),
         notify_service=_entry_value(entry, "notify_service"),
         brands=_entry_value(entry, "brands"),
+        detection_radius_m=entry.options.get(
+            "detection_radius_m",
+            entry.data.get("detection_radius_m", DEFAULT_DETECTION_RADIUS_METERS),
+        ),
     )
     await coordinator.async_load()
     await coordinator.async_refresh()

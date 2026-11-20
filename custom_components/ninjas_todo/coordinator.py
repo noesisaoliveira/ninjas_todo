@@ -50,6 +50,7 @@ class SupermarketCoordinator(DataUpdateCoordinator[list[dict[str, Any]]]):
         tracker_entity: str,
         notify_service: str,
         brands: list[str],
+        detection_radius_m: int,
     ) -> None:
         super().__init__(
             hass,
@@ -61,6 +62,7 @@ class SupermarketCoordinator(DataUpdateCoordinator[list[dict[str, Any]]]):
         self.tracker_entity = tracker_entity
         self.notify_service = notify_service
         self.brands = set(brands)
+        self.detection_radius_m = int(detection_radius_m)
         self.store = Store(hass, 1, f"{DOMAIN}_{entry.entry_id}_locations")
         self.hass = hass
         self.locations: list[dict[str, Any]] = []
@@ -149,17 +151,23 @@ class SupermarketCoordinator(DataUpdateCoordinator[list[dict[str, Any]]]):
                     location["latitude"],
                     location["longitude"],
                 )
-                <= 120
+                <= self.detection_radius_m
             }
 
         entered = current - self._inside
         self._inside = current
         if notify and entered:
+            _LOGGER.debug(
+                "Tracker entered %s supermarket radius/radii (%s m)",
+                len(entered),
+                self.detection_radius_m,
+            )
             await self._async_send_shopping_list()
 
     async def _async_send_shopping_list(self) -> None:
         now = datetime.now(timezone.utc)
         if self._last_notified and now - self._last_notified < NOTIFICATION_COOLDOWN:
+            _LOGGER.debug("Skipping shopping reminder because the cooldown is active")
             return
         if not self.hass.services.has_service("todo", "get_items"):
             _LOGGER.warning("The todo.get_items service is unavailable")
@@ -180,24 +188,47 @@ class SupermarketCoordinator(DataUpdateCoordinator[list[dict[str, Any]]]):
         items = response.get(TODO_ENTITY, {}).get("items", []) if response else []
         summaries = [item.get("summary", "") for item in items if item.get("summary")]
         if not summaries:
+            _LOGGER.info("No open shopping-list items; no reminder was sent")
             return
 
+        domain, service = self.notify_service.split(".", 1)
+        try:
+            await self.hass.services.async_call(
+                domain,
+                service,
+                {
+                    "title": "You're at the supermarket",
+                    "message": f"{len(summaries)} item(s): {', '.join(summaries)}",
+                    "data": {
+                        "tag": "shopping-list",
+                        "group": "shopping",
+                        "push": {"interruption-level": "time-sensitive"},
+                    },
+                },
+                blocking=True,
+            )
+        except HomeAssistantError:
+            _LOGGER.exception(
+                "Unable to send shopping reminder through %s", self.notify_service
+            )
+            return
+
+        self._last_notified = now
+        _LOGGER.info("Sent shopping reminder through %s", self.notify_service)
+
+    async def async_send_test_notification(self) -> None:
         domain, service = self.notify_service.split(".", 1)
         await self.hass.services.async_call(
             domain,
             service,
             {
-                "title": "You're at the supermarket",
-                "message": f"{len(summaries)} item(s): {', '.join(summaries)}",
-                "data": {
-                    "tag": "shopping-list",
-                    "group": "shopping",
-                    "push": {"interruption-level": "time-sensitive"},
-                },
+                "title": "Ninjas ToDo test",
+                "message": "Your phone notification service is working.",
+                "data": {"push": {"interruption-level": "time-sensitive"}},
             },
             blocking=True,
         )
-        self._last_notified = now
+        _LOGGER.info("Sent test notification through %s", self.notify_service)
 
     async def async_clear_locations(self) -> None:
         self.locations = []

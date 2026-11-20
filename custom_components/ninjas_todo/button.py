@@ -18,6 +18,7 @@ async def async_setup_entry(
         [
             ClearLocationCacheButton(coordinator, entry),
             RefreshLocationsButton(coordinator, entry),
+            TestNotificationButton(coordinator, entry),
         ]
     )
 
@@ -65,3 +66,22 @@ class RefreshLocationsButton(_ControlButton):
     async def async_press(self) -> None:
         await self.coordinator.async_refresh()
         await self.coordinator.async_check_location(notify=True)
+
+
+class TestNotificationButton(_ControlButton):
+    _attr_has_entity_name = True
+    _attr_entity_category = EntityCategory.CONFIG
+    _attr_name = "Test phone notification"
+    _attr_icon = "mdi:cellphone-message"
+
+    def __init__(self, coordinator: SupermarketCoordinator, entry: ConfigEntry) -> None:
+        super().__init__(coordinator)
+        self._attr_unique_id = f"{entry.entry_id}_test_notification"
+        self._attr_device_info = {
+            "identifiers": {(DOMAIN, entry.entry_id)},
+            "name": "Ninjas ToDo",
+            "manufacturer": "Ninjas ToDo",
+        }
+
+    async def async_press(self) -> None:
+        await self.coordinator.async_send_test_notification()

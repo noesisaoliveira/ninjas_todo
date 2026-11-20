@@ -8,6 +8,7 @@ TODO_ENTITY = "todo.shopping_list"
 OVERPASS_URL = "https://overpass-api.de/api/interpreter"
 LOCATION_REFRESH_INTERVAL = timedelta(hours=24)
 NOTIFICATION_COOLDOWN = timedelta(minutes=30)
+DEFAULT_DETECTION_RADIUS_METERS = 120
 
 BRAND_ALIASES: dict[str, tuple[str, ...]] = {
     "continente": ("continente", "modelo", "bom dia"),
