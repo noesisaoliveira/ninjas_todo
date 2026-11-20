@@ -52,7 +52,16 @@ The Ninjas ToDo device provides three buttons:
 
 The **Query 1Km Now** sensor reports how many selected supermarkets are within 1 km of the configured tracker. Its `locations` attribute lists each match with its name, brand, distance, and coordinates. It updates when the tracker moves and when the cached supermarket dataset changes. In **Developer Tools → States**, inspect `sensor.ninjas_todo_query_1km_now` to see the result.
 
-The integration sends a reminder only when the tracked entity newly enters the configured radius, then waits 30 minutes before notifying again. This cooldown helps prevent repeated notifications when GPS jitter moves the tracker across the radius edge. On iPhone, notifications are marked **time-sensitive**; allow Time Sensitive Notifications for Home Assistant in iOS notification settings if you want them to get through Focus modes. The integration does not create, rename, or delete Home Assistant zones.
+The integration queues a reminder when the tracked entity enters the configured radius, including when it is already inside at startup. It rechecks on tracker and shopping-list changes and once per minute. If the list is empty, a service fails, or the 30-minute notification cooldown is active, the reminder stays pending while the tracker remains inside. A successful send completes the reminder for that visit; leaving the radius cancels any pending reminder. Missing GPS updates do not count as leaving. The periodic check uses the latest coordinates already in Home Assistant; it cannot force the phone to supply fresh GPS updates.
+
+The cooldown helps prevent repeated notifications when GPS jitter moves the tracker across the radius edge. On iPhone, notifications are marked **time-sensitive**; allow Time Sensitive Notifications for Home Assistant in iOS notification settings if you want them to get through Focus modes. The integration does not create, rename, or delete Home Assistant zones.
+
+### Troubleshooting missed reminders
+
+1. Press **Test phone notification** to check the selected notification service.
+2. Inspect the configured tracker in **Developer Tools > States** and confirm its latitude and longitude update while you travel. For a person entity, check that its location matches the phone's GPS tracker.
+3. Inspect the **Query 1Km Now** sensor's `locations` attribute. The store must be in the downloaded dataset and within the configured detection radius, not just within 1 km. OpenStreetMap coordinates and GPS accuracy can affect detection; increase the radius if necessary.
+4. Confirm that `todo.shopping_list` has open items. Enable debug logging for Ninjas ToDo from its integration menu and inspect Home Assistant logs for shopping-list errors, notification-service errors, or an active cooldown.
 
 ## Location data and privacy
 
@@ -65,5 +74,7 @@ Overpass is a community service and may occasionally rate-limit or be unavailabl
 Brand matching uses the OpenStreetMap `brand`, `name`, and `operator` tags. Coverage depends on community mapping and may vary. The Continente option also matches Modelo and Bom Dia; Auchan matches the former Jumbo name; accented spelling variants are normalized.
 
 ## Development
+
+Run `python -m unittest discover -s tests -v` for the notification regression tests. These execute the notification methods and setup callbacks with mocked Home Assistant dependencies; they do not verify a running Home Assistant instance or phone delivery.
 
 The custom integration is in `custom_components/ninjas_todo`. Home Assistant serves its local brand images from `custom_components/ninjas_todo/brand/`; `icon.svg` is the scalable source artwork. HACS does not publish an integration to the default store automatically; the repository must be added as a custom repository, and releases must be published by a maintainer.

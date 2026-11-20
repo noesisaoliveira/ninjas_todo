@@ -1,12 +1,22 @@
 from __future__ import annotations
 
 import logging
+from datetime import datetime
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import Event, HomeAssistant
-from homeassistant.helpers.event import async_track_state_change_event
+from homeassistant.helpers.event import (
+    async_track_state_change_event,
+    async_track_time_interval,
+)
 
-from .const import DEFAULT_DETECTION_RADIUS_METERS, DOMAIN, PLATFORMS
+from .const import (
+    DEFAULT_DETECTION_RADIUS_METERS,
+    DOMAIN,
+    LOCATION_CHECK_INTERVAL,
+    PLATFORMS,
+    TODO_ENTITY,
+)
 from .coordinator import SupermarketCoordinator
 
 _LOGGER = logging.getLogger(__name__)
@@ -35,10 +45,18 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     async def handle_tracker_change(event: Event) -> None:
         await coordinator.async_check_location(notify=True)
 
+    async def handle_location_check(now: datetime) -> None:
+        await coordinator.async_check_location(notify=True)
+
     unsubscribe = async_track_state_change_event(
-        hass, [_entry_value(entry, "tracker_entity")], handle_tracker_change
+        hass,
+        [_entry_value(entry, "tracker_entity"), TODO_ENTITY],
+        handle_tracker_change,
     )
     entry.async_on_unload(unsubscribe)
+    entry.async_on_unload(
+        async_track_time_interval(hass, handle_location_check, LOCATION_CHECK_INTERVAL)
+    )
     entry.async_on_unload(entry.add_update_listener(async_reload_entry))
 
     await coordinator.async_check_location(notify=False)

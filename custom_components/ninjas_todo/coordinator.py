@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import logging
 import unicodedata
 from datetime import datetime, timezone
@@ -67,6 +68,8 @@ class SupermarketCoordinator(DataUpdateCoordinator[list[dict[str, Any]]]):
         self.hass = hass
         self.locations: list[dict[str, Any]] = []
         self._inside: set[str] = set()
+        self._pending: set[str] = set()
+        self._notification_lock = asyncio.Lock()
         self._last_notified: datetime | None = None
 
     async def async_load(self) -> None:
@@ -134,44 +137,50 @@ class SupermarketCoordinator(DataUpdateCoordinator[list[dict[str, Any]]]):
         return locations
 
     async def async_check_location(self, *, notify: bool) -> None:
+        async with self._notification_lock:
+            await self._async_check_location(notify=notify)
+
+    async def _async_check_location(self, *, notify: bool) -> None:
         state = self.hass.states.get(self.tracker_entity)
-        if state is None:
+        if state is None or state.state in ("unknown", "unavailable"):
             return
         latitude = state.attributes.get("latitude")
         longitude = state.attributes.get("longitude")
         if latitude is None or longitude is None:
-            current: set[str] = set()
-        else:
-            current = {
-                location["id"]
-                for location in self.locations
-                if distance_meters(
-                    float(latitude),
-                    float(longitude),
-                    location["latitude"],
-                    location["longitude"],
-                )
-                <= self.detection_radius_m
-            }
+            return
+        current = {
+            location["id"]
+            for location in self.locations
+            if distance_meters(
+                float(latitude),
+                float(longitude),
+                location["latitude"],
+                location["longitude"],
+            )
+            <= self.detection_radius_m
+        }
 
         entered = current - self._inside
         self._inside = current
-        if notify and entered:
+        self._pending.intersection_update(current)
+        self._pending.update(entered)
+        if notify and self._pending:
             _LOGGER.debug(
-                "Tracker entered %s supermarket radius/radii (%s m)",
-                len(entered),
+                "Checking pending reminder for %s supermarket radius/radii (%s m)",
+                len(self._pending),
                 self.detection_radius_m,
             )
-            await self._async_send_shopping_list()
+            if await self._async_send_shopping_list():
+                self._pending.clear()
 
-    async def _async_send_shopping_list(self) -> None:
+    async def _async_send_shopping_list(self) -> bool:
         now = datetime.now(timezone.utc)
         if self._last_notified and now - self._last_notified < NOTIFICATION_COOLDOWN:
             _LOGGER.debug("Skipping shopping reminder because the cooldown is active")
-            return
+            return False
         if not self.hass.services.has_service("todo", "get_items"):
             _LOGGER.warning("The todo.get_items service is unavailable")
-            return
+            return False
 
         try:
             response = await self.hass.services.async_call(
@@ -183,13 +192,13 @@ class SupermarketCoordinator(DataUpdateCoordinator[list[dict[str, Any]]]):
             )
         except HomeAssistantError:
             _LOGGER.exception("Unable to read the Home Assistant shopping list")
-            return
+            return False
 
         items = response.get(TODO_ENTITY, {}).get("items", []) if response else []
         summaries = [item.get("summary", "") for item in items if item.get("summary")]
         if not summaries:
             _LOGGER.info("No open shopping-list items; no reminder was sent")
-            return
+            return False
 
         domain, service = self.notify_service.split(".", 1)
         try:
@@ -211,10 +220,11 @@ class SupermarketCoordinator(DataUpdateCoordinator[list[dict[str, Any]]]):
             _LOGGER.exception(
                 "Unable to send shopping reminder through %s", self.notify_service
             )
-            return
+            return False
 
         self._last_notified = now
         _LOGGER.info("Sent shopping reminder through %s", self.notify_service)
+        return True
 
     async def async_send_test_notification(self) -> None:
         domain, service = self.notify_service.split(".", 1)
@@ -233,6 +243,7 @@ class SupermarketCoordinator(DataUpdateCoordinator[list[dict[str, Any]]]):
     async def async_clear_locations(self) -> None:
         self.locations = []
         self._inside.clear()
+        self._pending.clear()
         await self.store.async_remove()
         self.async_set_updated_data([])
 

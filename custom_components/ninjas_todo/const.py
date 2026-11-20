@@ -7,6 +7,7 @@ PLATFORMS = ["button", "sensor"]
 TODO_ENTITY = "todo.shopping_list"
 OVERPASS_URL = "https://overpass-api.de/api/interpreter"
 LOCATION_REFRESH_INTERVAL = timedelta(hours=24)
+LOCATION_CHECK_INTERVAL = timedelta(minutes=1)
 NOTIFICATION_COOLDOWN = timedelta(minutes=30)
 DEFAULT_DETECTION_RADIUS_METERS = 120
 
